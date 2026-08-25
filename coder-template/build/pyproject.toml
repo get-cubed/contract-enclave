@@ -1,0 +1,19 @@
+[project]
+name = "contract-pipeline"
+version = "0.1.0"
+description = "OCR + lost-value analysis over contracts, using only in-network models"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.50",
+    "pypdfium2>=4.30",
+    "pillow>=10.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+# Dependencies only -- the package itself is never "installed", so nothing
+# needs a build backend at runtime and the workspace can run fully offline.
+# Run with:  uv run -m contract_pipeline.cli analyze <pdf...>
+package = false
