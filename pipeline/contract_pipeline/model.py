@@ -2,11 +2,13 @@
 chat(), which times the call, narrates progress to the terminal, and records
 the full exchange for a per-contract audit log written beside the reports.
 
-The audit log is part of the product story: the enclave proves document
-content *can't* leave the network, and this file shows exactly what the
-model was asked and answered -- the whole exchange, reviewable on local disk.
+The call ledger is part of the product story: in the verified demo enclave,
+document traffic is confined to the configured model route, and this file
+shows the full text sent and returned, reviewable on local disk.
 """
 
+import html
+import re
 import time
 
 
@@ -41,7 +43,7 @@ def _describe(messages):
 
 
 def chat(client, model, messages, *, purpose, audit=None, log=print,
-         verbose=False, max_tokens=4096):
+         verbose=False, max_tokens=4096, response_format=None):
     """Send one chat request and return the stripped response text.
 
     purpose -- short label for the terminal line and the audit log entry
@@ -51,15 +53,42 @@ def chat(client, model, messages, *, purpose, audit=None, log=print,
     sent, request_text = _describe(messages)
     log(f"    -> {purpose}  [{sent}]")
     start = time.monotonic()
-    resp = client.chat.completions.create(
-        model=model, messages=messages, temperature=0.0, max_tokens=max_tokens
-    )
+    request = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.0,
+        "max_tokens": max_tokens,
+    }
+    if response_format is not None:
+        request["response_format"] = response_format
+    try:
+        resp = client.chat.completions.create(**request)
+    except Exception as exc:
+        elapsed = time.monotonic() - start
+        log(f"    !! {purpose}  failed after {elapsed:.1f}s ({type(exc).__name__})")
+        if audit is not None:
+            audit.append({
+                "purpose": purpose,
+                "model": model,
+                "seconds": round(elapsed, 1),
+                "sent": sent,
+                "prompt_tokens": None,
+                "completion_tokens": None,
+                "request_text": request_text,
+                "response_text": "",
+                "error": f"{type(exc).__name__}: {exc}",
+            })
+        raise
+
     elapsed = time.monotonic() - start
     text = (resp.choices[0].message.content or "").strip()
     usage = getattr(resp, "usage", None)
     in_tok = getattr(usage, "prompt_tokens", None)
     out_tok = getattr(usage, "completion_tokens", None)
-    tokens = f", {in_tok:,} tokens in / {out_tok:,} out" if in_tok is not None else ""
+    tokens = (
+        f", {in_tok:,} tokens in / {out_tok:,} out"
+        if in_tok is not None and out_tok is not None else ""
+    )
     log(f"    <- {purpose}  {elapsed:.1f}s{tokens}, {len(text):,} chars back")
     if verbose:
         log("    ┌─ raw model output " + "─" * 41)
@@ -76,36 +105,54 @@ def chat(client, model, messages, *, purpose, audit=None, log=print,
             "completion_tokens": out_tok,
             "request_text": request_text,
             "response_text": text,
+            "error": None,
         })
     return text
 
 
+def _safe_markdown_text(value) -> str:
+    """Neutralize raw HTML while preserving readable Markdown text."""
+    return " ".join(html.escape(str(value), quote=False).splitlines())
+
+
+def _fenced(value) -> list[str]:
+    """Fence arbitrary model text without assuming it uses <=3 backticks."""
+    text = str(value)
+    longest = max((len(run) for run in re.findall(r"`+", text)), default=0)
+    fence = "`" * max(4, longest + 1)
+    return [fence, text, fence]
+
+
 def render_audit_md(contract_name: str, audit: list[dict]) -> str:
-    """The audit log as markdown: every exchange for one contract, in full."""
+    """Render a call ledger with full text prompts/responses and image metadata."""
     total = sum(a["seconds"] for a in audit)
     lines = [
-        f"# Model Audit Log: {contract_name}",
+        f"# Model Audit Log: {_safe_markdown_text(contract_name)}",
         "",
-        f"{len(audit)} model calls, {total:.0f}s total, all to the in-network "
-        "endpoint. This file is the complete record of what the model was "
-        "sent and what it answered; no other AI traffic exists.",
+        f"{len(audit)} model calls, {total:.0f}s total, all to the model "
+        "endpoint configured for this run. This ledger preserves every full "
+        "text prompt and response (including failures). Page images are "
+        "identified by size rather than duplicated as base64; the source PDF "
+        "remains the image record.",
         "",
     ]
     for i, a in enumerate(audit, 1):
         tokens = ""
-        if a["prompt_tokens"] is not None:
+        if a["prompt_tokens"] is not None and a["completion_tokens"] is not None:
             tokens = f" · {a['prompt_tokens']:,} tokens in / {a['completion_tokens']:,} out"
-        # four-backtick fences so fenced blocks inside model output can't break out
+        purpose = _safe_markdown_text(a["purpose"])
+        model = _safe_markdown_text(a["model"])
         lines += [
-            f"## {i}. {a['purpose']}",
+            f"## {i}. {purpose}",
             "",
-            f"`{a['model']}` · {a['seconds']}s · sent {a['sent']}{tokens}",
+            f"Model: {model} · {a['seconds']}s · sent {_safe_markdown_text(a['sent'])}{tokens}",
             "",
             "**Request (text sent; images summarized):**",
-            "````", a["request_text"], "````",
-            "",
-            "**Response:**",
-            "````", a["response_text"], "````",
-            "",
         ]
+        lines += _fenced(a["request_text"])
+        lines.append("")
+        if a.get("error"):
+            lines += ["**Error:**"] + _fenced(a["error"]) + [""]
+        else:
+            lines += ["**Response:**"] + _fenced(a["response_text"]) + [""]
     return "\n".join(lines)

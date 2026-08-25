@@ -11,9 +11,11 @@ everything here — never trade them away to fix a symptom:
    workspace to another network, adding a runtime download, or calling an
    external AI API — sealing is the product. `scripts/verify-enclave.sh`
    must pass after any change to networking, the template, or the image.
-2. **The model never does arithmetic.** It returns a formula built from
-   numbers quoted out of the contract; `analyze.safe_eval` (restricted AST:
-   `+ - * /` and parentheses only) computes the value. Model-supplied totals
+2. **The model never supplies a computed dollar total.** Discovery and monthly
+   formula normalization are separate calls. Code validates number provenance
+   and cash-flow scope, deterministically handles unambiguous explicit averages
+   and annual-only cadence, evaluates a restricted AST (`+ - * /` and
+   parentheses only), and multiplies one month by twelve. Model-supplied totals
    are discarded — keep it that way.
 
 ## Run / develop
@@ -29,8 +31,7 @@ everything here — never trade them away to fix a symptom:
   recreate) so the workspace picks up the new build.
 - Tests: `cd pipeline && uv run -m pytest` — no model needed.
 - Fast iteration on report formatting: add `--mock` to the analyze command
-  (skips the model entirely). `--perspective customer` flips the analysis to
-  the buyer's side.
+  (skips the model entirely).
 
 ## Gotchas that already burned time
 
@@ -45,9 +46,10 @@ everything here — never trade them away to fix a symptom:
   stale — re-run `dev-up.sh` and `coder update` — do not relax the offline
   flags.
 - Ollama returns 403 for requests whose Host header isn't localhost-like;
-  `scripts/model-relay.py` rewrites the header. Don't swap it for a plain
-  TCP proxy (that's what the coder gateway uses, and it only works there
-  because Coder doesn't check Host).
+  `scripts/model-relay.py` rewrites the header and allows only `GET /v1/models`
+  and `POST /v1/chat/completions`. Never expose Ollama's management endpoints
+  (especially pull/push/create) to a workspace. The Coder gateway is raw TCP
+  because the agent needs the Coder control plane's full protocol.
 - On a native Linux Docker engine (not Docker Desktop), containers cannot
   reach host-loopback services: Ollama and Coder must listen on 0.0.0.0.
   `dev-up.sh` detects this, and prints the systemd override if Ollama was
@@ -61,11 +63,11 @@ everything here — never trade them away to fix a symptom:
 ## Layout
 
 - `pipeline/` — PDF → per-page OCR (vision model) → findings JSON → md/html
-  reports. Entry point: `contract_pipeline/cli.py`; prompts and the safe
-  evaluator: `contract_pipeline/analyze.py`. Every model call goes through
-  `model.py`'s `chat()`, which narrates progress and feeds the per-contract
-  `model-log.md` audit file — route any new model call through it so the
-  audit stays complete.
+  reports. Entry point: `contract_pipeline/cli.py`; prompts, provenance checks,
+  annualization, and the safe evaluator: `contract_pipeline/analyze.py`. Every
+  model call goes through `model.py`'s `chat()`, which narrates progress and
+  feeds the per-contract `model-log.md` call ledger — route any new model call
+  through it so successful and failed calls remain auditable.
 - `coder-template/` — the Coder workspace template; `build/` is the offline
   workspace image.
 - `sample-contracts/` — synthetic and watermarked; regenerate with

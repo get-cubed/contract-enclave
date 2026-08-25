@@ -1,15 +1,15 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["fpdf2>=2.7"]
+# dependencies = ["fpdf2==2.8.8"]
 # ///
 """Generate synthetic contract PDFs with planted revenue leakage for the demo.
 
 The client in both contracts is the PROVIDER (Meridian, Northgate) -- the
 party delivering the work -- because that's who this tool is actually built
-for: vendors who aren't collecting everything their own contracts entitle
-them to. The exhibits also plant customer-side findings so the
---perspective flag has something to find in both directions. Every document
-is clearly footered as fictitious.
+for: vendors who aren't collecting everything their own contracts may entitle
+them to. The exhibits also contain customer-side entitlements as realistic
+scope distractors; a correct provider run must omit them. Every document is
+clearly footered as fictitious.
 
 The ANSWER KEY comment at the top of each build_* function lists what was
 planted and the expected math -- use it to grade the model's findings.
@@ -76,22 +76,16 @@ class ContractPDF(FPDF):
 
 def build_msa(path):
     # ANSWER KEY -- planted findings, with the math a correct run shows.
-    # Provider perspective (default; client = Meridian):
+    # Validated provider-recovery scope (client = Meridian):
     #   §5.2 + Exh B: New Facility Discount expired Dec 2024, still applied
-    #                 in 2025/2026 ................. 840000 * 0.05 = $42,000/yr
+    #                 in 2025/2026 ........... 840000 * 5 / 100 = $42,000/yr
     #   §5.3 + Exh B: 3% annual escalation allowed, never invoiced
-    #                 ............................. 840000 * 0.03 = $25,200/yr
+    #                 ........................ 840000 * 3 / 100 = $25,200/yr
     #                 ("may increase" is permissive, not automatic -- a model
     #                 that calls this discretionary and skips it has a point;
     #                 that's a good talking point, not a bug)
     #   §4.2 + Exh C: 23.0 emergency hours delivered Jan-Jul 2026, never
     #                 billed ......... 23 * 185 / 7 * 12 = ~$7,294/yr annualized
-    # Customer perspective (--perspective customer; client = Bluegrass):
-    #   §6.2 + Exh D: Q1/Q2 2026 availability below 99.5%, credits unclaimed
-    #   §7.1 + Exh D: every quarter tops 1,200 service-hours; 8% volume
-    #                 discount never applied
-    #   §3.1: 90-day renewal-notice window approaching
-    #   §11.2: 25% termination charge constrains renegotiation
     pdf = ContractPDF()
     pdf.add_page()
     pdf.title_block(
@@ -208,8 +202,9 @@ def build_msa(path):
         [40, 25, 95],
     )
     pdf.para(
-        "23.0 emergency service hours were logged January-July 2026, averaging "
-        "3.3 hours per month. None of these calls appear as a separate line "
+        "23.0 emergency service hours were logged over seven calendar months "
+        "from January through July 2026, averaging 23 / 7 hours per month "
+        "(approximately 3.3). None of these calls appear as a separate line "
         "item on any invoice in Exhibit B; only the flat monthly base fee was "
         "billed in each of those months."
     )
@@ -231,18 +226,12 @@ def build_msa(path):
 
 def build_saas(path):
     # ANSWER KEY -- planted findings, with the math a correct run shows.
-    # Provider perspective (default; client = Northgate):
+    # Validated provider-recovery scope (client = Northgate):
     #   §5.2 + Exh A: Early Adopter Discount expired Dec 2024, invoices still
     #                 show $85.50 vs the $95.00 contract rate
     #                 ................. 250 * (95 - 85.50) * 12 = $28,500/yr
     #   §2.4 + Exh B: ~11 seats over the 250 commitment May-Jul 2026, overage
     #                 never billed ......... 110 * 11 * 12 = $14,520/yr
-    # Customer perspective (--perspective customer; client = Bluegrass):
-    #   §4.2 + Exh A: Premium Support billed $18,000/yr though the Enterprise
-    #                 tier includes it (billing overlap)
-    #   §5.3 + Exh B: Feb-Apr active seats ~180 vs 250 committed -- the
-    #                 seat-reduction right at renewal is going unused
-    #   §2.3: 60-day renewal-notice window
     pdf = ContractPDF()
     pdf.add_page()
     pdf.title_block(

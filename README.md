@@ -1,18 +1,20 @@
 # Contract Enclave: Contract Value Recovery, Inside the Firewall
 
-Finds money a business is owed under its own old contracts — a missed
-escalation, work delivered but never billed, a discount still running after
-it expired — by reading the contracts with an AI model that runs entirely
-inside your network. **No document content ever leaves the network it runs
-in, and no calls go to external AI APIs.**
+Surfaces evidence-backed candidates for money a business may be owed under its
+own old contracts — a missed escalation, work delivered but never billed, a
+discount still running after it expired — by reading the contracts with an AI
+model that runs entirely inside your network. In the demo configuration, **the workspace has no
+internet route, the model relay exposes inference only, and the pipeline makes
+no calls to external AI APIs.**
 
-That's built for the real use case: a vendor or service provider who has
-delivered work for years and quietly stopped collecting everything their
-contract entitles them to. (The mirror image — a customer checking whether
-*they're* overpaying — is one flag away; see [docs/running-the-demo.md](docs/running-the-demo.md).)
+That's built for one deliberately narrow use case: a vendor or service
+provider who has delivered work for years and quietly stopped collecting
+everything their contract may entitle them to. Customer-side overpayment
+analysis is outside this demo's validated scope.
 
-**[See how it works →](docs/how-it-works.html)** — open directly in a
-browser (`open docs/how-it-works.html`), no server needed. Start here.
+**[See how it works →](docs/how-it-works.html)** — open the self-contained file
+directly in any browser; it has no remote assets and needs no server. Start
+here.
 
 ## Run it
 
@@ -40,8 +42,8 @@ uv run -m contract_pipeline.cli analyze ../sample-contracts/*.pdf --out ../repor
 ```
 
 Click the **Reports** button on the workspace page to see the results —
-including `*.model-log.md`, a complete audit of every prompt and response,
-kept on local disk.
+including `*.model-log.md`, a call ledger with every full text prompt and
+response (plus page-image size references), kept on local disk.
 
 ## Prove it's actually sealed
 
@@ -49,8 +51,9 @@ kept on local disk.
 scripts/verify-enclave.sh demo
 ```
 
-Confirms the workspace has no route to the internet at all — only the AI
-model and the Coder control plane it needs. Non-zero exit if anything fails.
+Confirms the workspace has no default route, has no unexpected network peers,
+cannot reach the internet, and can reach only the inference-limited model relay
+and the Coder control plane it needs. Non-zero exit if anything fails.
 
 ## More detail
 

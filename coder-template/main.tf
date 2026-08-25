@@ -7,23 +7,29 @@
 // Nothing is downloaded at runtime -- see build/Dockerfile.
 
 terraform {
+  required_version = ">= 1.9.0"
+
   required_providers {
     coder = {
-      source = "coder/coder"
+      source  = "coder/coder"
+      version = "2.18.0"
     }
     docker = {
-      source = "kreuzwerker/docker"
+      source  = "kreuzwerker/docker"
+      version = "4.5.0"
     }
   }
 }
 
 variable "model_base_url" {
   description = "OpenAI-compatible endpoint reachable from inside the enclave"
+  type        = string
   default     = "http://model:11434/v1"
 }
 
 variable "model_name" {
   description = "Model name to request at the endpoint"
+  type        = string
   # NOTE: the bare qwen3-vl:8b Ollama tag is the *thinking* variant, which
   # returns empty content on JSON-extraction prompts. Use -instruct.
   default = "qwen3-vl:8b-instruct"
@@ -31,17 +37,26 @@ variable "model_name" {
 
 variable "repo_host_path" {
   description = "Host path of the contract-enclave repo to mount into workspaces"
+  type        = string
   default     = "/opt/contract-enclave"
 }
 
 variable "enclave_network" {
   description = "Name of the pre-existing internal Docker network workspaces are confined to"
+  type        = string
   default     = "enclave"
 }
 
 variable "agent_coder_url" {
   description = "How the workspace agent reaches the Coder server from inside the enclave"
+  type        = string
   default     = "http://coder:3000"
+}
+
+variable "app_subdomain" {
+  description = "Serve workspace apps on wildcard subdomains (recommended with a production wildcard access URL)"
+  type        = bool
+  default     = false
 }
 
 provider "docker" {}
@@ -66,13 +81,14 @@ resource "coder_agent" "main" {
     UV_PROJECT_ENVIRONMENT = "/opt/venv"
     UV_OFFLINE             = "1"
     UV_FROZEN              = "1"
+    UV_PYTHON_DOWNLOADS    = "never"
   }
 
   startup_script = <<-EOT
     set -e
     mkdir -p /home/coder/contract-enclave/reports
     cd /home/coder/contract-enclave/pipeline
-    uv sync   # offline + frozen: fails loudly if the image is stale
+    uv sync --offline --frozen   # fails loudly if the image is stale
     echo "Enclave workspace ready. Try:"
     echo "  cd ~/contract-enclave/pipeline"
     echo "  uv run -m contract_pipeline.cli analyze ../sample-contracts/*.pdf --out ../reports"
@@ -96,11 +112,12 @@ resource "coder_agent" "main" {
 
 module "code_server" {
   source         = "registry.coder.com/coder/code-server/coder"
-  version        = "~> 1.0"
+  version        = "1.5.2"
   agent_id       = coder_agent.main.id
   folder         = "/home/coder/contract-enclave"
   offline        = true
   install_prefix = "/opt/code-server"
+  subdomain      = var.app_subdomain
 }
 
 // Serves the generated HTML reports inside the workspace (no downloads needed).
@@ -122,7 +139,7 @@ resource "coder_app" "reports" {
   url          = "http://localhost:8088"
   icon         = "/icon/folder.svg"
   share        = "owner"
-  subdomain    = false
+  subdomain    = var.app_subdomain
 }
 
 resource "docker_image" "workspace" {
@@ -160,6 +177,11 @@ resource "docker_container" "workspace" {
   # The whole point: this is the container's ONLY network, and it is internal.
   network_mode = data.docker_network.enclave.name
 
+  capabilities {
+    drop = ["ALL"]
+  }
+  security_opts = ["no-new-privileges:true"]
+
   volumes {
     container_path = "/home/coder"
     volume_name    = docker_volume.home.name
@@ -168,6 +190,9 @@ resource "docker_container" "workspace" {
   volumes {
     container_path = "/home/coder/contract-enclave"
     host_path      = var.repo_host_path
-    read_only      = false
+    # Laptop-development convenience. A production template should bake the
+    # application into an immutable image and mount only dedicated input/output
+    # storage with the minimum required write access.
+    read_only = false
   }
 }

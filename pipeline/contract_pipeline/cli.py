@@ -1,4 +1,4 @@
-"""CLI: contract-pipeline analyze <pdf...> [--out DIR] [--mock] [--verbose] [--perspective provider|customer]
+"""CLI: contract-pipeline analyze <pdf...> [--out DIR] [--mock] [--verbose]
 
 Writes per-contract artifacts (transcript.md, findings.json, report.md,
 report.html, and -- on real runs -- model-log.md, the full audit of every
@@ -41,11 +41,22 @@ def main(argv=None) -> int:
     p.add_argument("-v", "--verbose", action="store_true",
                    help="print each raw model response in the terminal (the full "
                         "exchange is always saved to <name>.model-log.md regardless)")
-    p.add_argument("--perspective", choices=["provider", "customer"], default="provider",
-                   help="whose money is at stake: the party delivering the work and "
-                        "underbilling for it (default), or the party paying and "
-                        "overpaying / leaving credits unclaimed")
     args = parser.parse_args(argv)
+    perspective = "provider"
+
+    pdf_paths = [Path(pdf) for pdf in args.pdfs]
+    missing = [str(path) for path in pdf_paths if not path.is_file()]
+    if missing:
+        parser.error("PDF not found: " + ", ".join(missing))
+    names = [path.stem for path in pdf_paths]
+    folded_names = [name.casefold() for name in names]
+    duplicates = sorted({
+        names[index]
+        for index, folded in enumerate(folded_names)
+        if folded_names.count(folded) > 1
+    })
+    if duplicates:
+        parser.error("PDF basenames must be unique to avoid overwriting reports: " + ", ".join(duplicates))
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -55,39 +66,46 @@ def main(argv=None) -> int:
         print(f"Model endpoint: {args.base_url} ({args.model})")
 
     results = []
-    for pdf in args.pdfs:
-        pdf_path = Path(pdf)
+    for pdf_path in pdf_paths:
         name = pdf_path.stem
         print(f"[{name}]")
         audit = []  # one entry per model exchange; becomes <name>.model-log.md
         if args.mock:
-            if args.perspective == "provider":
-                transcript, fixture = mock.MOCK_TRANSCRIPT, mock.MOCK_FINDINGS
-            else:
-                transcript, fixture = mock.MOCK_TRANSCRIPT_CUSTOMER, mock.MOCK_FINDINGS_CUSTOMER
-            findings = analyze_mod.finalize_findings(copy.deepcopy(fixture))
+            transcript, fixture = mock.MOCK_TRANSCRIPT, mock.MOCK_FINDINGS
+            findings = analyze_mod.finalize_findings(
+                copy.deepcopy(fixture), transcript, perspective=perspective
+            )
         else:
-            transcript = ocr.ocr_pdf(client, args.model, str(pdf_path),
-                                     verbose=args.verbose, audit=audit)
-            findings = analyze_mod.analyze(client, args.model, transcript,
-                                           perspective=args.perspective,
-                                           verbose=args.verbose, audit=audit)
+            try:
+                transcript = ocr.ocr_pdf(client, args.model, str(pdf_path),
+                                         verbose=args.verbose, audit=audit)
+                findings = analyze_mod.analyze(client, args.model, transcript,
+                                               perspective=perspective,
+                                               verbose=args.verbose, audit=audit)
+            finally:
+                if audit:
+                    (out_dir / f"{name}.model-log.md").write_text(
+                        render_audit_md(name, audit), encoding="utf-8"
+                    )
 
-        (out_dir / f"{name}.transcript.md").write_text(transcript)
-        (out_dir / f"{name}.findings.json").write_text(json.dumps(findings, indent=2))
-        (out_dir / f"{name}.report.md").write_text(report.render_markdown(name, findings))
-        (out_dir / f"{name}.report.html").write_text(report.render_html(name, findings))
-        if audit:
-            (out_dir / f"{name}.model-log.md").write_text(render_audit_md(name, audit))
+        (out_dir / f"{name}.transcript.md").write_text(transcript, encoding="utf-8")
+        (out_dir / f"{name}.findings.json").write_text(
+            json.dumps(findings, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        (out_dir / f"{name}.report.md").write_text(
+            report.render_markdown(name, findings), encoding="utf-8"
+        )
+        (out_dir / f"{name}.report.html").write_text(
+            report.render_html(name, findings), encoding="utf-8"
+        )
         for i, f in enumerate(findings, 1):
             print(f"    {i}. [{f.get('category', 'other')}] {f.get('clause', '?')} — "
                   f"{report.fmt_usd(f.get('estimated_annual_value_usd'))}/yr "
                   f"({f.get('confidence', '?')} confidence)")
-        value = report.total_value(findings)
-        print(f"    => {len(findings)} findings, est. ${value:,.0f}/yr at stake")
+        print(f"    => {len(findings)} findings, est. {report.fmt_total(findings)}/yr at stake")
         results.append((name, findings))
 
-    (out_dir / "summary.md").write_text(report.render_summary(results))
+    (out_dir / "summary.md").write_text(report.render_summary(results), encoding="utf-8")
     print(f"\nReports written to {out_dir}/ (summary.md has the portfolio view)")
     return 0
 

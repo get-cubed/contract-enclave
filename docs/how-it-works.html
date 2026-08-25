@@ -1,6 +1,9 @@
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Contract Enclave</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   :root {
     --paper: #F4F5F2;
@@ -47,7 +50,7 @@
   body {
     background: var(--paper);
     color: var(--ink);
-    font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: 17px;
     line-height: 1.55;
     margin: 0;
@@ -57,7 +60,7 @@
   .prose { max-width: 66ch; }
 
   h1, h2, h3 {
-    font-family: "Libre Caslon Text", Georgia, "Times New Roman", serif;
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
     font-weight: 700;
     letter-spacing: -0.01em;
     text-wrap: balance;
@@ -67,7 +70,7 @@
   h2 { font-size: 1.55rem; line-height: 1.2; margin-top: 3.5rem; }
   h3 { font-size: 1.15rem; margin-top: 1.5rem; }
   .eyebrow {
-    font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
     font-size: 0.78rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -78,7 +81,7 @@
   .lede { font-size: 1.2rem; line-height: 1.5; color: var(--ink); margin-top: 1.25rem; }
   .muted { color: var(--muted); }
   code, .mono {
-    font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
     font-size: 0.92em;
   }
   code { background: var(--paper-2); padding: 0.1em 0.35em; border-radius: 3px; }
@@ -99,7 +102,7 @@
   }
 
   /* diagram vocabulary */
-  svg { font-family: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  svg { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
   .box { fill: var(--paper); stroke: currentColor; stroke-width: 1.4; }
   .box-model { fill: var(--model-soft); stroke: currentColor; stroke-width: 1.4; }
   .box-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
@@ -108,12 +111,12 @@
   .t { fill: currentColor; font-size: 13px; }
   .t-title { fill: currentColor; font-size: 14px; font-weight: 600; }
   .t-sub { fill: var(--muted); font-size: 11.5px; }
-  .t-label { fill: currentColor; font-family: "IBM Plex Mono", Menlo, monospace; font-size: 11px; letter-spacing: 0.08em; }
-  .t-zone { fill: var(--accent-ink); font-family: "IBM Plex Mono", Menlo, monospace; font-size: 11px; letter-spacing: 0.1em; font-weight: 500; }
-  .t-zone-outer { fill: var(--muted); font-family: "IBM Plex Mono", Menlo, monospace; font-size: 11px; letter-spacing: 0.1em; }
-  .t-denied { fill: var(--denied); font-family: "IBM Plex Mono", Menlo, monospace; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; }
-  .t-formula { fill: currentColor; font-family: "IBM Plex Mono", Menlo, monospace; font-size: 11.5px; }
-  .t-tag { fill: var(--muted); font-family: "IBM Plex Mono", Menlo, monospace; font-size: 10px; letter-spacing: 0.12em; }
+  .t-label { fill: currentColor; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11px; letter-spacing: 0.08em; }
+  .t-zone { fill: var(--accent-ink); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11px; letter-spacing: 0.1em; font-weight: 500; }
+  .t-zone-outer { fill: var(--muted); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11px; letter-spacing: 0.1em; }
+  .t-denied { fill: var(--denied); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; }
+  .t-formula { fill: currentColor; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 11.5px; }
+  .t-tag { fill: var(--muted); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 10px; letter-spacing: 0.12em; }
   .edge { stroke: currentColor; stroke-width: 1.4; fill: none; }
   .edge-denied { stroke: var(--denied); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
   .edge-faint { stroke: var(--denied); stroke-width: 1.2; fill: none; stroke-dasharray: 2 5; opacity: 0.7; }
@@ -121,7 +124,7 @@
 
   /* proof block */
   .proof {
-    font-family: "IBM Plex Mono", Menlo, monospace;
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
     font-size: 0.84rem;
     line-height: 1.6;
     background: var(--paper-2);
@@ -137,7 +140,7 @@
   /* findings table */
   table { border-collapse: collapse; width: 100%; margin-top: 1.25rem; font-size: 0.95rem; }
   th, td { text-align: left; vertical-align: top; padding: 0.6rem 0.7rem; border-bottom: 1px solid var(--line); }
-  th { font-family: "IBM Plex Mono", Menlo, monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  th { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
   td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
   td.mono, th { white-space: nowrap; }
   .table-wrap { overflow-x: auto; }
@@ -152,17 +155,19 @@
   @media (prefers-reduced-motion: no-preference) { a { transition: color .15s; } }
   a { color: var(--accent-ink); }
 </style>
+</head>
+<body>
 
 <div class="page">
   <div class="prose">
     <div class="eyebrow">How it works</div>
     <h1>A sealed room for reading contracts</h1>
-    <p class="lede">A vendor who has delivered work under the same contract for years quietly stops collecting everything it entitles them to — an escalation never invoked, overage work never billed, a discount still running long after it expired. Finding that means reading contracts the client considers confidential, so the analysis moves in instead: a self-contained appliance that reads, transcribes, and audits them with a model running <em>inside</em> the client’s network — and is physically unable to send anything out.</p>
+    <p class="lede">A vendor who has delivered work under the same contract for years quietly stops collecting everything it entitles them to — an escalation never invoked, overage work never billed, a discount still running long after it expired. Finding that means reading contracts the client considers confidential, so the analysis moves in instead: a self-contained demo that reads, transcribes, and audits them with a model running <em>inside</em> the client’s network. The workspace has no internet route, and its model relay exposes inference rather than Ollama’s management API.</p>
     <p class="muted">Three pictures. The first shows the walls; the second shows what happens to a contract inside them; the third shows how the demo on a laptop maps onto the real deployment.</p>
   </div>
 
   <h2>1. The walls</h2>
-  <p class="prose">Every contract is read inside a container on a Docker <em>internal</em> network — one with no address translation and no default route. The container can reach exactly two neighbours, both on the same box. That isn’t a rule someone wrote; there is simply no path out.</p>
+  <p class="prose">Every contract is read inside a container on a Docker <em>internal</em> network — one with no default route and firewall rules that drop traffic to other networks. The verified single-workspace demo has exactly two service neighbours on the same box. The model neighbour accepts only model listing and chat completions.</p>
 
   <figure>
     <div class="frame">
@@ -238,7 +243,7 @@
         <text class="t-sub" x="90" y="540">OpenAI · Anthropic · Hugging Face · PyPI · public DNS</text>
       </svg>
     </div>
-    <figcaption>The workspace’s only neighbours are the Coder server (so the analyst can see it) and the model server (so it can read). The boundary is the network itself: an internal Docker network has no route to anything else, which is why the blocked path ends at the enclave edge rather than at a firewall rule.</figcaption>
+    <figcaption>The workspace’s service neighbours are the Coder server (so the analyst can see it) and the inference-only model relay (so it can read). The live proof also rejects unexpected peer containers. Docker’s internal network supplies the missing default route and cross-network firewall boundary.</figcaption>
   </figure>
 
   <div class="layers">
@@ -252,12 +257,12 @@
     </div>
     <div class="layer">
       <h3>Proof</h3>
-      <p>A script runs fourteen checks against a live workspace — five internet targets and public DNS must fail, the two neighbours must answer. It exits non-zero on any miss.</p>
+      <p>A script runs twenty-three checks against a live workspace — topology, container hardening, five internet targets, public DNS, allowed services, blocked model management, and build hygiene. It exits non-zero on any miss.</p>
     </div>
   </div>
 
   <h2>2. What happens to a contract</h2>
-  <p class="prose">The model does what it’s good at — reading scanned pages and spotting the clause where money leaks — and is kept away from what it’s bad at. It never states a dollar figure. It writes down the arithmetic using numbers from the contract, and ordinary code computes the result and prints the working beside it.</p>
+  <p class="prose">The model does what it’s good at — reading scanned pages and spotting the clause where money leaks — and is kept away from what it’s bad at. Discovery does no math; a separate structured pass proposes a formula for one representative month. Code checks cash-flow direction and numeric provenance, handles unambiguous explicit averages and annual-only cadence deterministically, evaluates a bounded arithmetic tree, multiplies the result by twelve, and prints the working beside the result.</p>
 
   <figure>
     <div class="frame">
@@ -316,19 +321,19 @@
         <text class="t-tag" x="20" y="204">WORKED EXAMPLE · MERIDIAN FIELD SERVICES</text>
         <text class="t-sub" x="334" y="220">5% intro discount expired</text>
         <text class="t-sub" x="334" y="236">Dec 2024, still applied</text>
-        <text class="t-formula" x="484" y="220">840,000</text>
-        <text class="t-formula" x="484" y="236">× 0.05</text>
-        <text class="t-formula" x="634" y="220">= $42,000</text>
-        <text class="t-sub" x="634" y="236">per year, by code</text>
+        <text class="t-formula" x="484" y="220">840,000 × 5 ÷ 100</text>
+        <text class="t-formula" x="484" y="236">÷ 12 = $3,500/mo</text>
+        <text class="t-formula" x="634" y="220">$3,500 × 12</text>
+        <text class="t-sub" x="634" y="236">= $42,000/yr, by code</text>
         <text class="t-formula" x="784" y="220" style="fill: var(--accent-ink); font-weight: 500">$42,000</text>
         <text class="t-sub" x="784" y="236">high confidence</text>
       </svg>
     </div>
-    <figcaption>Shaded stages are the model; plain stages are deterministic code. The split matters: left to do its own arithmetic, the model’s totals drifted between runs — and once quietly reported seven months of evidence as a full year, using a scaling step that canceled itself out. With the formula evaluated by code and the time-scaling made explicit in the prompt, the figure is $42,000 every time — and the reader can check the math themselves.</figcaption>
+    <figcaption>Shaded stages are the model; plain stages are deterministic code. The split matters: an earlier period-based schema let the model label both a seven-month total and a monthly average with the wrong period. Discovery now does no arithmetic, a narrow second pass proposes one monthly formula, and code validates or normalizes it before multiplying by twelve. The reader can inspect every step and every model exchange.</figcaption>
   </figure>
 
   <h2>3. The demo and the real thing</h2>
-  <p class="prose">The laptop demo and a client install run the same workspace, the same template, and the same sealed network. The one difference: on a laptop the model and control plane run natively beside Docker — that’s where the GPU is — so two single-port relays stand in for the neighbours. On a server the neighbours are just containers on the same internal network — no relay, no host hop.</p>
+  <p class="prose">The laptop demo shows the workspace boundary that a client install can preserve. On a laptop the model and control plane run natively beside Docker — that’s where the GPU is — so two single-port relays stand in for the neighbours. A production server can place the model and control plane directly on private networks, but it also needs TLS, identity, wildcard app subdomains with path apps disabled, private mirrors, a managed database, per-tenant isolation where required, and host-level egress controls.</p>
 
   <figure>
     <div class="frame">
@@ -400,7 +405,7 @@
         <text class="t-label" x="781" y="232" text-anchor="middle">NO RELAYS — NEIGHBOURS ARE LOCAL</text>
       </svg>
     </div>
-    <figcaption>Same workspace, same template, same enclave. The relays exist only because the model runs natively on the laptop; in a client install the model and control plane are containers beside the workspace, and the server’s own egress is closed as well.</figcaption>
+    <figcaption>The relays are a laptop-demo adaptation for host-native Coder and Ollama. A client deployment can place those services directly on private networks and close server egress, but must package its providers, modules, images, model weights, database, and ingress for that environment.</figcaption>
   </figure>
 
   <h2>Proof, not promise</h2>
@@ -410,6 +415,14 @@
   <span class="pass">PASS</span>  enclave network 'enclave' is internal (no NAT, no default route)
   <span class="pass">PASS</span>  workspace container 'coder-admin-demo' is running
   <span class="pass">PASS</span>  workspace is attached ONLY to 'enclave' (attached: enclave)
+  <span class="pass">PASS</span>  workspace has no default route
+  <span class="pass">PASS</span>  enclave contains only this workspace and its two gateways
+  <span class="pass">PASS</span>  Coder gateway bridges exactly 'enclave' and 'bridge'
+  <span class="pass">PASS</span>  model gateway bridges exactly 'enclave' and 'bridge'
+  <span class="pass">PASS</span>  workspace drops all Linux capabilities
+  <span class="pass">PASS</span>  workspace enforces no-new-privileges
+  <span class="pass">PASS</span>  Coder gateway is read-only, capability-free, and no-new-privileges
+  <span class="pass">PASS</span>  model gateway is read-only, capability-free, and no-new-privileges
 <span class="hdr">== Egress from inside the workspace (every one of these must fail) ==</span>
   <span class="pass">PASS</span>  cannot reach https://api.openai.com
   <span class="pass">PASS</span>  cannot reach https://api.anthropic.com
@@ -419,23 +432,24 @@
   <span class="pass">PASS</span>  cannot resolve public DNS (example.com)
 <span class="hdr">== Allowlisted services (must work) ==</span>
   <span class="pass">PASS</span>  model endpoint answers at $MODEL_BASE_URL/models
+  <span class="pass">PASS</span>  Ollama management API is blocked by the inference-only relay
   <span class="pass">PASS</span>  Coder server reachable via enclave route (http://coder:3000/healthz)
   <span class="pass">PASS</span>  pipeline runs with UV_OFFLINE=1 (mock mode)
 <span class="hdr">== Build hygiene (image is built from the pinned lockfile) ==</span>
   <span class="pass">PASS</span>  coder-template/build/uv.lock matches pipeline/uv.lock
   <span class="pass">PASS</span>  coder-template/build/pyproject.toml matches pipeline/pyproject.toml
 
-14 passed, 0 failed</div>
+23 passed, 0 failed</div>
 
   <h2>What a finding looks like</h2>
-  <p class="prose">Two real findings from the sample contracts, produced inside the sealed workspace — one an expired discount still being given away, the other work delivered but never invoiced. The figure is computed from the formula; the formula is built from numbers the model quoted from the contract, scaled to a full year where the evidence covers less than one.</p>
+  <p class="prose">Two findings planted in the synthetic sample contracts — one an expired discount still being given away, the other work delivered but never invoiced. A narrow model pass proposes a monthly formula; code verifies its inputs, uses direct evidence where the rate and average are unambiguous, computes one month, and multiplies by twelve.</p>
   <div class="table-wrap">
     <table>
       <tr><th>Finding</th><th>Where</th><th>The math</th><th>Per year</th></tr>
       <tr>
         <td><strong>Discount never reverted.</strong> A five-percent new-facility discount was correct for its first twelve months, then should have ended. Invoices two years later still reflect it.</td>
         <td>§5.2; Exhibit B</td>
-        <td class="mono">840,000 × 0.05</td>
+        <td class="mono">840,000 × 5 ÷ 100 ÷ 12 × 12</td>
         <td class="num">$42,000</td>
       </tr>
       <tr>
@@ -448,5 +462,7 @@
   </div>
 
   <hr>
-  <p class="foot">Sample contracts are synthetic and watermarked as such. Model: Qwen3-VL-8B (Apache-2.0), served by Ollama on the laptop and vLLM on a GPU server install. Platform: Coder, self-hosted, which documents air-gapped installation for the fully offline version of this deployment.</p>
+  <p class="foot">Sample contracts are synthetic and watermarked as such. Findings are candidates for human review, not legal or accounting advice. Model: Qwen3-VL-8B (Apache-2.0), served by Ollama in this laptop demo. Platform: self-hosted Coder, whose air-gapped deployment guide covers the additional server, registry, provider, STUN, telemetry, and update-check controls required for a fully offline client installation. This HTML file has no remote assets.</p>
 </div>
+</body>
+</html>
