@@ -119,9 +119,13 @@ def render_html(contract_name: str, findings: list[dict]) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Lost-Value Report: {e(contract_name)}</title>
 <style>
-  body {{ font: 15px/1.5 -apple-system, Segoe UI, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #1a202c; }}
+  /* The palette is light-only, so both the background and the scheme are
+     pinned; without them, dark-mode browsers paint a dark ground under the
+     dark text and the report becomes unreadable. */
+  body {{ font: 15px/1.5 -apple-system, Segoe UI, sans-serif; margin: 2rem auto; max-width: 60rem; padding: 0 1rem; color: #1a202c; background: #fff; }}
   h1 {{ font-size: 1.4rem; }}
   .kpi {{ font-size: 1.1rem; margin-bottom: 1.5rem; }}
   .kpi b {{ color: #b7791f; }}
