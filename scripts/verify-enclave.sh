@@ -62,6 +62,9 @@ echo "== Egress from inside the workspace (every one of these must fail) =="
 for target in https://api.openai.com https://api.anthropic.com https://huggingface.co https://pypi.org http://1.1.1.1; do
   check_fails "cannot reach $target" ws "curl -sS -o /dev/null --max-time 6 $target"
 done
+# Cloud hosts: the instance-metadata service hands out host identity/credentials.
+check_fails "cannot reach cloud instance metadata (169.254.169.254)" \
+  ws "curl -sS -o /dev/null --max-time 6 -H Metadata:true 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'"
 check_fails "cannot resolve public DNS (example.com)" ws "getent hosts example.com"
 
 echo "== Allowlisted services (must work) =="

@@ -29,6 +29,11 @@ everything here — never trade them away to fix a symptom:
   `cd ~/contract-enclave/pipeline && uv run -m contract_pipeline.cli analyze ../sample-contracts/*.pdf --out ../reports`
 - After the template or image changes: `coder update demo` (or delete and
   recreate) so the workspace picks up the new build.
+- Hosted demo (one Azure VM running the same stack): `scripts/azure-demo.sh up`,
+  then `start` / `stop` / `verify` / `down` — see `docs/azure-demo.md`. It
+  creates billable resources: Terraform shows the plan and waits for approval.
+  State, SSH key, and the Coder admin password live in
+  `~/.local/state/contract-enclave/azure/`, never in the repo.
 - Tests: `cd pipeline && uv run -m pytest` — no model needed.
 - Fast iteration on report formatting: add `--mock` to the analyze command
   (skips the model entirely).
@@ -72,5 +77,7 @@ everything here — never trade them away to fix a symptom:
   workspace image.
 - `sample-contracts/` — synthetic and watermarked; regenerate with
   `uv run generate.py` in that directory.
-- `scripts/` — bring-up, enclave verification, model relay.
+- `deploy/azure/` — Terraform for the hosted demo VM, plus the on-VM service
+  setup (`host-setup.sh`); driven by `scripts/azure-demo.sh`.
+- `scripts/` — bring-up (laptop and Azure), enclave verification, model relay.
 - `docs/how-it-works.html` — visual walkthrough; open directly in a browser.

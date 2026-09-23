@@ -139,8 +139,8 @@ scripts/verify-enclave.sh demo           # live enclave checks against a workspa
 `verify-enclave.sh` asserts: the network is internal; the workspace is on
 that network only with all Linux capabilities dropped and no-new-privileges;
 both gateways are read-only, capability-free, and no-new-privileges; no
-unexpected peers or default route exist; five egress targets and public DNS all
-fail from inside; the model endpoint and Coder route work while Ollama
+unexpected peers or default route exist; five egress targets, the cloud
+instance-metadata address, and public DNS all fail from inside; the model endpoint and Coder route work while Ollama
 management is blocked; the pipeline runs with `UV_OFFLINE=1`; and the image's
 pinned lockfile matches the pipeline's. Non-zero exit on any failure, so it can
 gate a demo or CI run.

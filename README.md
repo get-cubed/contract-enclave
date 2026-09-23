@@ -61,3 +61,4 @@ and the Coder control plane it needs. Non-zero exit if anything fails.
 - [docs/architecture.md](docs/architecture.md) — the network boundary, and what's in this repo
 - [docs/running-the-demo.md](docs/running-the-demo.md) — full walkthrough, options, tests
 - [docs/notes.md](docs/notes.md) — model choices, what's synthetic, context limits
+- [docs/azure-demo.md](docs/azure-demo.md) — the same stack on one Azure GPU VM, for hosted live sessions

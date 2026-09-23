@@ -257,7 +257,7 @@
     </div>
     <div class="layer">
       <h3>Proof</h3>
-      <p>A script runs twenty-three checks against a live workspace — topology, container hardening, five internet targets, public DNS, allowed services, blocked model management, and build hygiene. It exits non-zero on any miss.</p>
+      <p>A script runs twenty-four checks against a live workspace — topology, container hardening, five internet targets, cloud instance metadata, public DNS, allowed services, blocked model management, and build hygiene. It exits non-zero on any miss.</p>
     </div>
   </div>
 
@@ -429,6 +429,7 @@
   <span class="pass">PASS</span>  cannot reach https://huggingface.co
   <span class="pass">PASS</span>  cannot reach https://pypi.org
   <span class="pass">PASS</span>  cannot reach http://1.1.1.1
+  <span class="pass">PASS</span>  cannot reach cloud instance metadata (169.254.169.254)
   <span class="pass">PASS</span>  cannot resolve public DNS (example.com)
 <span class="hdr">== Allowlisted services (must work) ==</span>
   <span class="pass">PASS</span>  model endpoint answers at $MODEL_BASE_URL/models
@@ -439,7 +440,7 @@
   <span class="pass">PASS</span>  coder-template/build/uv.lock matches pipeline/uv.lock
   <span class="pass">PASS</span>  coder-template/build/pyproject.toml matches pipeline/pyproject.toml
 
-23 passed, 0 failed</div>
+24 passed, 0 failed</div>
 
   <h2>What a finding looks like</h2>
   <p class="prose">Two findings planted in the synthetic sample contracts — one an expired discount still being given away, the other work delivered but never invoiced. A narrow model pass proposes a monthly formula; code verifies its inputs, uses direct evidence where the rate and average are unambiguous, computes one month, and multiplies by twelve.</p>
