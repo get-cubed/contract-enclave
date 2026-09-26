@@ -19,7 +19,10 @@ req = urllib.request.Request(sys.argv[1] + "/api/v2/users/login", data=body,
                              headers={"Content-Type": "application/json"})
 print(json.load(urllib.request.urlopen(req))["session_token"])
 ' "$URL")"
-  CODER_SESSION_TOKEN="$TOKEN" coder login "$URL" >/dev/null
+  # Store it where `coder login` would. (`coder login` refuses to run while
+  # CODER_SESSION_TOKEN is set, and --token would put it on a command line.)
+  CONFIG="${CODER_CONFIG_DIR:-$HOME/.config/coderv2}"
+  (umask 077; mkdir -p "$CONFIG"; printf '%s' "$TOKEN" > "$CONFIG/session"; printf '%s' "$URL" > "$CONFIG/url")
 else
   CODER_FIRST_USER_PASSWORD="$PASSWORD" coder login "$URL" \
     --first-user-username "$USERNAME" --first-user-email "$EMAIL" \
