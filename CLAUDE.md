@@ -60,6 +60,10 @@ everything here — never trade them away to fix a symptom:
   `dev-up.sh` detects this, and prints the systemd override if Ollama was
   installed as a service. A ufw firewall blocking the Docker bridge shows up
   the same way.
+- Coder CLI sessions expire after 24h idle. `verify-enclave.sh` then prints
+  `NOTE  coder ssh cannot reach workspace` and fails every in-workspace check:
+  run `coder login` again (or give the CLI a longer-lived `coder tokens create`
+  token), and never read those failures as a broken enclave.
 - Reports land in `reports/` (gitignored) and are served by the workspace's
   **Reports** app button. `summary.md` is the portfolio view.
 - Dollar values of `n/a` are correct behavior when the contract gives no

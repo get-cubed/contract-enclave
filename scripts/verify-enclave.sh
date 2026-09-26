@@ -17,7 +17,6 @@ pass=0; fail=0
 ok() { echo "  PASS  $1"; pass=$((pass + 1)); }
 ko() { echo "  FAIL  $1"; fail=$((fail + 1)); }
 check()       { local d="$1"; shift; if "$@" >/dev/null 2>&1; then ok "$d"; else ko "$d"; fi; }
-check_fails() { local d="$1"; shift; if "$@" >/dev/null 2>&1; then ko "$d"; else ok "$d"; fi; }
 contains()    { case "$1" in *"$2"*) return 0 ;; *) return 1 ;; esac; }
 gateway_hardened() {
   local name="$1" read_only cap_drop security_opt
@@ -28,6 +27,19 @@ gateway_hardened() {
 }
 # coder ssh hands its arguments to the remote shell, so pass one quoted string.
 ws() { coder ssh "$WS" -- "$1"; }
+# ws_fails <description> <command>: PASS only if the command ran inside the
+# workspace and failed there. The probe reports its own exit code, so a
+# `coder ssh` that cannot connect (expired CLI session, stopped workspace)
+# is a FAIL, never a vacuous "egress blocked".
+ws_fails() {
+  local out
+  out="$(ws "$2 >/dev/null 2>&1; echo probe-exit=\$?" 2>/dev/null)"
+  case "$out" in
+    *probe-exit=0*) ko "$1" ;;
+    *probe-exit=[1-9]*) ok "$1" ;;
+    *) ko "$1 (probe could not run inside the workspace)" ;;
+  esac
+}
 networks_for() {
   docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$1" 2>/dev/null \
     | xargs -n1 | sort | xargs
@@ -40,8 +52,11 @@ CID="$(docker ps --format '{{.Names}}' | grep -E "^coder-.+-${WS}$" | head -1)"
 check "workspace container '$CID' is running" test -n "$CID"
 NETS="$(networks_for "$CID")"
 check "workspace is attached ONLY to '$NET' (attached: ${NETS:-none})" test "$NETS" = "$NET"
-check_fails "workspace has no default route" \
-  ws "grep -Eq '^[^[:space:]]+[[:space:]]+00000000[[:space:]]' /proc/net/route"
+if ! WS_ERR="$(ws true 2>&1)"; then
+  echo "  NOTE  coder ssh cannot reach workspace '$WS': $(printf '%s\n' "$WS_ERR" | grep -v '^[[:space:]]*$' | tail -1)"
+fi
+ws_fails "workspace has no default route" \
+  "grep -Eq '^[^[:space:]]+[[:space:]]+00000000[[:space:]]' /proc/net/route"
 PEERS="$(docker network inspect -f '{{range $id, $c := .Containers}}{{$c.Name}} {{end}}' "$NET" 2>/dev/null \
   | xargs -n1 | sort | xargs)"
 EXPECTED_PEERS="$(printf '%s\n' "$CID" enclave-gw-coder enclave-gw-model | sort | xargs)"
@@ -60,19 +75,19 @@ check "model gateway is read-only, capability-free, and no-new-privileges" gatew
 
 echo "== Egress from inside the workspace (every one of these must fail) =="
 for target in https://api.openai.com https://api.anthropic.com https://huggingface.co https://pypi.org http://1.1.1.1; do
-  check_fails "cannot reach $target" ws "curl -sS -o /dev/null --max-time 6 $target"
+  ws_fails "cannot reach $target" "curl -sS -o /dev/null --max-time 6 $target"
 done
 # Cloud hosts: the instance-metadata service hands out host identity/credentials.
-check_fails "cannot reach cloud instance metadata (169.254.169.254)" \
-  ws "curl -sS -o /dev/null --max-time 6 -H Metadata:true 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'"
-check_fails "cannot resolve public DNS (example.com)" ws "getent hosts example.com"
+ws_fails "cannot reach cloud instance metadata (169.254.169.254)" \
+  "curl -sS -o /dev/null --max-time 6 -H Metadata:true 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'"
+ws_fails "cannot resolve public DNS (example.com)" "getent hosts example.com"
 
 echo "== Allowlisted services (must work) =="
 # Expansion intentionally happens in the workspace.
 # shellcheck disable=SC2016
 check "model endpoint answers at \$MODEL_BASE_URL/models" ws 'curl -sf --max-time 10 "$MODEL_BASE_URL/models"'
-check_fails "Ollama management API is blocked by the inference-only relay" \
-  ws 'curl -sf --max-time 10 http://model:11434/api/tags'
+ws_fails "Ollama management API is blocked by the inference-only relay" \
+  'curl -sf --max-time 10 http://model:11434/api/tags'
 check "Coder server reachable via enclave route (http://coder:3000/healthz)" ws 'curl -sf --max-time 10 http://coder:3000/healthz'
 check "pipeline runs with UV_OFFLINE=1 (mock mode)" \
   ws 'cd ~/contract-enclave/pipeline && uv run -m contract_pipeline.cli analyze ../sample-contracts/meridian-msa.pdf --mock --out /tmp/verify-enclave'

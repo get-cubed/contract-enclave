@@ -142,7 +142,9 @@ both gateways are read-only, capability-free, and no-new-privileges; no
 unexpected peers or default route exist; five egress targets, the cloud
 instance-metadata address, and public DNS all fail from inside; the model endpoint and Coder route work while Ollama
 management is blocked; the pipeline runs with `UV_OFFLINE=1`; and the image's
-pinned lockfile matches the pipeline's. Non-zero exit on any failure, so it can
+pinned lockfile matches the pipeline's. Every "must fail" probe reports its own
+exit code from inside the workspace, so if `coder ssh` cannot connect, those
+checks fail instead of passing by default. Non-zero exit on any failure, so it can
 gate a demo or CI run.
 
 ## Production boundary
